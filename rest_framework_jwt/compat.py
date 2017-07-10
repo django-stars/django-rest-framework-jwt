@@ -1,6 +1,8 @@
-from django.contrib.auth import get_user_model
+from django.apps import apps as django_apps
 
 from rest_framework import serializers
+
+from rest_framework_jwt.settings import api_settings
 
 
 class Serializer(serializers.Serializer):
@@ -17,6 +19,20 @@ class PasswordField(serializers.CharField):
         else:
             kwargs['style']['input_type'] = 'password'
         super(PasswordField, self).__init__(*args, **kwargs)
+
+
+def get_user_model():
+    """
+    Returns the User model will be used for JWT authentication.
+    """
+    try:
+        return django_apps.get_model(api_settings.JWT_AUTH_USER_MODEL, require_ready=False)
+    except ValueError:
+        raise ImproperlyConfigured("JWT_AUTH_USER_MODEL must be of the form 'app_label.model_name'")
+    except LookupError:
+        raise ImproperlyConfigured(
+            "JWT_AUTH_USER_MODEL refers to model '%s' that has not been installed" % api_settings.JWT_AUTH_USER_MODEL
+        )
 
 
 def get_username_field():
